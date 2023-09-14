@@ -2,24 +2,23 @@
 import json
 import pandas as pd
 import plotly.express as px
+import streamlit as st
+import requests
 
 
-# Getting the coordinates of the parking 
+#Getting the coordinates of the parking 
+url = "https://www.ogd.stadt-zuerich.ch/wfs/geoportal/Gebietseinteilung_Parkierungsgebuehren?service=WFS&version=1.1.0&request=GetFeature&outputFormat=GeoJSON&typename=tarifzonen"
+response=requests.get(url)
+tarif=response.json()
+# file_path="./data/dav_tarifzonen.json"
 
-with open("./ParkingPrice/data/dav.tarifzonen.json") as tarif:
-    tarif = json.load(tarif)
+# with open(file_path,'r') as tarif:
+#     tarif = json.load(tarif)
 
-tarif["features"][0]
-
-tarif['geometry.coordinates'][0][0][0]
-
-# for i in range(4):
-#     tarif['geometry.coordinates'][i][]
-#     lat=lat.append()
 
 data = pd.DataFrame({
     'region_id': ['1', '2', '3','4'],
-    'value': [1, 0, 0,0],
+    'value': [1, 1, 1,0],
 })
 data
 
@@ -30,9 +29,14 @@ fig = px.choropleth_mapbox(
     locations="region_id",  # Identifier in your data
     featureidkey="properties.objectid",  # Identifier in GeoJSON matching your data
         color="value",  # Data values for coloring the regions
-    color_continuous_scale="Viridis",  # Choose a color scale
-    mapbox_style="carto-positron",
-    center={"lat": 47, "lon": 8.33},
-    zoom=2
+    color_continuous_scale="turbo",  # Choose a color scale
+    mapbox_style="open-street-map",
+    center={"lat": 47.373878, "lon": 8.545094},
+    zoom=15,
+    height=1000,
+    width=1000,
+    opacity=0.4
 )
-fig.show()
+
+st.plotly_chart(fig)
+
