@@ -14,8 +14,6 @@ from pprint import pprint
 #coorindates [x,y] indicates the targeted destination
 st.title("Parking options in Zurich")
 
-st.subheader("Where are you going?")
-
 def get_geocode_from_address(address):
     endpoint = "https://nominatim.openstreetmap.org/search"
     params = {
@@ -30,13 +28,13 @@ def get_geocode_from_address(address):
     return None
 
 
-address = st.text_input("Enter your destination:",value="Heinrichstrasse 200, 8005 Zurich")
+address = st.text_input("Where are you going? Enter your destination:",value="Heinrichstrasse 200, 8005 Zurich")
 #address = "Heinrichstrasse 200, 8005 Zurich"  # Example address
 coordinates = get_geocode_from_address(address)
 
 
 if coordinates:
-    st.write(f"Latitude: {coordinates[0]}, Longitude: {coordinates[1]}")
+    #st.write(f"Latitude: {coordinates[0]}, Longitude: {coordinates[1]}")
     user_input_lat =coordinates[0]
     user_input_lon =coordinates[1]
 else:
@@ -63,7 +61,7 @@ else:
 
 
 
-###################################################obtain geo of on-street parking - Antonio code#####################################################################
+###################################################obtain geo of on-street parking - Antonio + Tim code#####################################################################
 #translator = Translator()
 geo_url = 'https://www.ogd.stadt-zuerich.ch/wfs/geoportal/Oeffentlich_zugaengliche_Strassenparkplaetze_OGD?service=WFS&version=1.1.0&request=GetFeature&outputFormat=GeoJSON&typename=view_pp_ogd'
 
@@ -152,7 +150,7 @@ parkinghouse_trace=go.Scattermapbox(
     lon = df["lon"],
     mode = "markers",
     marker=dict(size=20),
-    name='Park house'
+    name='Park houses'
     )
 
 #######################################obtain tarifzones Jin code####################################################################################
@@ -243,9 +241,6 @@ tarifzones.add_trace(map_fig_onstreet)
 #             )
 #         tarifzones.add_trace(map_fig_onstreet)
 
-
-tarifzones.add_trace(parkinghouse_trace)
-
 destination_trace = go.Scattermapbox(
     lat=[user_input_lat], 
     lon=[user_input_lon], 
@@ -256,7 +251,19 @@ destination_trace = go.Scattermapbox(
     )
 tarifzones.add_trace(destination_trace)
 
+
+
+
+
+
+
+st.subheader("Display parking choices near to my destination")
+
+if st.checkbox('Show parking houses in map'):
+    tarifzones.add_trace(parkinghouse_trace)
+
 st.plotly_chart(tarifzones)
+
 
 
 
