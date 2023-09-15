@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from urllib.request import urlopen
 from pprint import pprint
-import scoring
+
 from cmcrameri import cm
 import numpy as np
 
@@ -85,7 +85,10 @@ df_park = read_data(file_path)
 # for key in to_trans:
 #     df_park.loc[df_park["parking_kind"] == key, "parking_kind"] = to_trans[key]
 
-
+############################## NEW  ############################
+# ############################## Filter parking spots inside Radius ############################
+############################## Filter parking spots inside Radius ############################
+# ############################## Filter parking spots inside Radius ############################
 # ############################## Filter parking spots inside Radius ############################
 
 lat_dis_zh = 77.8  # one degree of lat is about 78 km at Zurich
@@ -114,13 +117,6 @@ def label_in_radius(row):
 df_park["in_radius"] = df_park.apply(label_in_radius, axis=1)
 
 df_park = df_park[df_park["in_radius"] == 1]
-
-############################################### ADDING WEIGHTING AND SCORING #######################################################################################
-############################################### ADDING WEIGHTING AND SCORING #######################################################################################
-############################################### ADDING WEIGHTING AND SCORING #######################################################################################
-############################################### ADDING WEIGHTING AND SCORING #######################################################################################
-############################################### ADDING WEIGHTING AND SCORING #######################################################################################
-df_park = scoring.parking_score(df_park, duration_scale=1.1, noise_scale=0.8, leisure_scale=1.3, traffic_scale=0.8)
 
 #############################################obtain geo of parking houses - Timothycode##############################################################
 geo_url2 = "https://www.ogd.stadt-zuerich.ch/wfs/geoportal/Oeffentlich_zugaengliche_Parkhaeuser?service=WFS&version=1.1.0&request=GetFeature&outputFormat=GeoJSON&typename=poi_parkhaus_view"
@@ -185,15 +181,16 @@ tarifzones = px.choropleth_mapbox(
     featureidkey="properties.objectid",  # Identifier in GeoJSON matching your data
     color="value",  # Data values for coloring the regions
     color_continuous_scale="value",  # Choose a color scale
-    mapbox_style="stamen-toner",
+    mapbox_style="open-street-map",
     center={"lat": user_input_lat, "lon": user_input_lon},
     zoom=14,
     height=1000,
     width=1000,
-    opacity=0.2,
+    opacity=0.15,
     hover_data=["region", "value", "bedienungszeiten"],
 )
 tarifzones.update_coloraxes(showscale=False)
+tarifzones.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
 ####################################plot added trace of on-street parking and parking houses ############################################################
 # add radio to select show parking_kind in same marker but diff color,  or same color but different marker.
@@ -224,7 +221,7 @@ def produe_marker_colors(values, color_scale=100):
     svalues = (values - min(values)) / (max(values) - min(values)) * (color_scale - 1)
     rdigits = int(np.log10(color_scale))
     cmap = mpl_to_plotly(
-        cm.roma, pl_entries=color_scale, rdigits=rdigits, reverse=True
+        cm.glasgow, pl_entries=color_scale, rdigits=rdigits, reverse=True
     )
     cindeces = [int(value) for value in svalues]
     return [cmap[ci] for ci in cindeces], cmap
@@ -233,7 +230,7 @@ def produe_marker_colors(values, color_scale=100):
 # df_park["score"] = df_park["anzfahrzeuge"] / df_park["anzfahrzeuge"].sum()
 
 parking_markers, cmap = produe_marker_colors(
-    df_park["score"]
+    df_park["leisure_norm"]
 )  # replace 'anzfahrzeuge' with 'score'
 
 map_fig_onstreet = go.Scattermapbox(
@@ -253,34 +250,34 @@ map_fig_onstreet = go.Scattermapbox(
         showscale=True,
         cmin=0,
         cmax=1,
-    ),
+    )
 )
 tarifzones.update_layout(legend=dict(x=0))
 
 tarifzones.add_trace(map_fig_onstreet)
 
 # trace 3: added trace of destination on the map#
+
 destination_trace = go.Scattermapbox(
     lat=[user_input_lat],
     lon=[user_input_lon],
     mode="markers",
     name="Destination",
+    text='Destination',
     marker=dict(size=40),
-    hovertemplate="Travel destination" + "<extra></extra>",
+    hovertemplate='Destination'
 )
+
 tarifzones.add_trace(destination_trace)
+
+
+
 
 # trace 4: added trace parking houses #
 if st.checkbox("Include parking houses"):
     tarifzones.add_trace(parkinghouse_trace)
 
 # display the graph with all traces#
-
-
-#selectbox of background
-selected_option = st.selectbox("Select a map background", ["open-street-map", "stamen-toner", "Satellite"])
-
-tarifzones.update_layout(mapbox_style=selected_option)
 st.plotly_chart(tarifzones)
 
 ################################### section 3: display data #######################################################
