@@ -116,6 +116,8 @@ def label_in_radius(row):
 
 df_park["in_radius"] = df_park.apply(label_in_radius, axis=1)
 
+df_park = df_park[df_park["in_radius"] == 1]
+
 #############################################obtain geo of parking houses - Timothycode##############################################################
 geo_url2 = "https://www.ogd.stadt-zuerich.ch/wfs/geoportal/Oeffentlich_zugaengliche_Parkhaeuser?service=WFS&version=1.1.0&request=GetFeature&outputFormat=GeoJSON&typename=poi_parkhaus_view"
 
@@ -217,7 +219,9 @@ def mpl_to_plotly(cmap, pl_entries=11, rdigits=2, reverse=False):
 def produe_marker_colors(values, color_scale=100):
     svalues = (values - min(values)) / (max(values) - min(values)) * (color_scale - 1)
     rdigits = int(np.log10(color_scale))
-    cmap = mpl_to_plotly(cm.roma, pl_entries=color_scale, rdigits=rdigits, reverse=True)
+    cmap = mpl_to_plotly(
+        cm.glasgow, pl_entries=color_scale, rdigits=rdigits, reverse=True
+    )
     cindeces = [int(value) for value in svalues]
     return [cmap[ci] for ci in cindeces], cmap
 
