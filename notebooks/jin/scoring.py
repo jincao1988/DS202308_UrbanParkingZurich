@@ -1,15 +1,13 @@
 import pandas as pd
 import numpy as np
 
-# df_ = pd.read_csv("./data/processed/full_final_df_norm.csv")
-
-def parking_score(df, duration_scale=1.1, noise_scale=1, leisure_scale=1, traffic_scale=1):
+def parking_score(df, duration_scale=1.1, noise_scale=1.3, leisure_scale=1, traffic_scale=1):
 
     score = []
 
     for index, row in df.iterrows():
 
-        duration = 1/row['parking_duration']
+        duration = 1/row['duration_norm']
         noise = 1/row['noise_norm']
         leisure = 1/row['leisure_norm']
         traffic = 1/row['traffic_norm']
@@ -24,5 +22,3 @@ def parking_score(df, duration_scale=1.1, noise_scale=1, leisure_scale=1, traffi
 
     df['score'] = normalized_data
     return df
-
-# parking_score(df_[0:12])

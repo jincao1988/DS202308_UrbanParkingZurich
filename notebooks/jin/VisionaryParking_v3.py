@@ -118,7 +118,7 @@ df_park["in_radius"] = df_park.apply(label_in_radius, axis=1)
 
 df_park = df_park[df_park["in_radius"] == 1]
 
-df_park = scoring.parking_score(df_park)
+df_park = scoring.parking_score(df_park, duration_scale=1.1, noise_scale=1.3, leisure_scale=1.6, traffic_scale=1)
 
 #############################################obtain geo of parking houses - Timothycode##############################################################
 geo_url2 = "https://www.ogd.stadt-zuerich.ch/wfs/geoportal/Oeffentlich_zugaengliche_Parkhaeuser?service=WFS&version=1.1.0&request=GetFeature&outputFormat=GeoJSON&typename=poi_parkhaus_view"
