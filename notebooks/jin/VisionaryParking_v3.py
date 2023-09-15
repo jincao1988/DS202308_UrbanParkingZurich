@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from urllib.request import urlopen
 from pprint import pprint
-
+import scoring
 from cmcrameri import cm
 import numpy as np
 
@@ -117,6 +117,8 @@ def label_in_radius(row):
 df_park["in_radius"] = df_park.apply(label_in_radius, axis=1)
 
 df_park = df_park[df_park["in_radius"] == 1]
+
+df_park = scoring.parking_score(df_park)
 
 #############################################obtain geo of parking houses - Timothycode##############################################################
 geo_url2 = "https://www.ogd.stadt-zuerich.ch/wfs/geoportal/Oeffentlich_zugaengliche_Parkhaeuser?service=WFS&version=1.1.0&request=GetFeature&outputFormat=GeoJSON&typename=poi_parkhaus_view"
@@ -229,7 +231,7 @@ def produe_marker_colors(values, color_scale=100):
 # df_park["score"] = df_park["anzfahrzeuge"] / df_park["anzfahrzeuge"].sum()
 
 parking_markers, cmap = produe_marker_colors(
-    df_park["anzfahrzeuge"]
+    df_park["score"]
 )  # replace 'anzfahrzeuge' with 'score'
 
 map_fig_onstreet = go.Scattermapbox(
