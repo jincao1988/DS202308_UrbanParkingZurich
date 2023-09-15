@@ -30,7 +30,7 @@ def get_geocode_from_address(address):
     return None
 
 
-address = st.text_input("Enter the latitude of your destination:",value="Heinrichstrasse 200, 8005 Zurich")
+address = st.text_input("Enter your destination:",value="Heinrichstrasse 200, 8005 Zurich")
 #address = "Heinrichstrasse 200, 8005 Zurich"  # Example address
 coordinates = get_geocode_from_address(address)
 
@@ -95,6 +95,34 @@ df_park.loc[df_park['payed'] == 'nicht gebührenpflichtig', 'payed'] = 0
 df_park.loc[df_park['payed'] == 'gebührenpflichtig', 'payed'] = 1
 for key in to_trans:
     df_park.loc[df_park['parking_kind'] == key, 'parking_kind'] = to_trans[key]
+
+############################## SCORING: Tim traffic score ############################
+
+df_park=pd.read_csv("data/processed/parking_spots_traffic_scores.csv")
+
+to_trans = {'Blaue Zone': 'Blue Zone',
+            'Weiss markiert': 'White Zone',
+            'Nur mit Geh-Behindertenausweis': 'Disabled',
+            'Nur für Taxi': 'Only Taxi',
+            'Für Reisecars': 'Only Coaches',
+            'Für Elektrofahrzeuge': 'Only Electric vehicles',
+            'Zeitweise Taxi, zeitweise Güterumschlag': 'Temporary'}
+
+rename_dict = { 'properties.id1' : 'property_id', 
+                'properties.parkdauer' : 'parking_duration', 
+                'properties.art' : 'parking_kind',
+                'properties.gebuehrenpflichtig': 'payed', 
+                'properties.objectid' : 'object_id',
+                'geometry.coordinates': 'coord'}
+
+df_park = df_park.rename(columns=rename_dict)
+
+df_park = df_park.drop(['type', 'geometry.type', 'coord', 'id', 'object_id'], axis=1)
+df_park.loc[df_park['payed'] == 'nicht gebührenpflichtig', 'payed'] = 0
+df_park.loc[df_park['payed'] == 'gebührenpflichtig', 'payed'] = 1
+for key in to_trans:
+    df_park.loc[df_park['parking_kind'] == key, 'parking_kind'] = to_trans[key]
+
 
 # df_park # display the table of on-street parking data
 
