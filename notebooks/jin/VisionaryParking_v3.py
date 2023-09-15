@@ -1,4 +1,5 @@
 import json
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -13,6 +14,8 @@ from pprint import pprint
 ################################################### input variables #####################################################################
 #coorindates [x,y] indicates the targeted destination
 st.title("Parking options in Zurich")
+
+st.header("Input needed")
 
 def get_geocode_from_address(address):
     endpoint = "https://nominatim.openstreetmap.org/search"
@@ -32,6 +35,8 @@ address = st.text_input("Where are you going? Enter your destination:",value="He
 #address = "Heinrichstrasse 200, 8005 Zurich"  # Example address
 coordinates = get_geocode_from_address(address)
 
+radius = st.number_input("How far are you willing to park?",value=300)
+
 
 if coordinates:
     #st.write(f"Latitude: {coordinates[0]}, Longitude: {coordinates[1]}")
@@ -40,59 +45,8 @@ if coordinates:
 else:
     st.write("Failed to get coordinates.")
 
-
-
-# col1, col2 = st.columns(2)
-
-# # Add an input box to the first column
-# with col1:
-#     user_input_lat = st.number_input("Enter the latitude of your destination:", format="%.4f",value=47.373878, step=0.001)
-#     st.write(f"Exact latitude is: {user_input_lat}")
-# # Add another input box to the second column
-# with col2:
-#     user_input_lon = st.number_input("Enter the lontitude of your destination:", format="%.4f", value=8.545094, step=0.001)
-#     st.write(f"Exact longtitude is: {user_input_lon}")
-
-# st.subheader("How far are you willing to park?")
-# user_input_r = st.number_input("Enter the afforable walking distance to destination:", value=500, step=10)
-# st.write(f"Walking distance to destination: {user_input_r} meters")
-
-
-
-
-
 ###################################################obtain geo of on-street parking - Antonio + Tim code#####################################################################
-#translator = Translator()
-geo_url = 'https://www.ogd.stadt-zuerich.ch/wfs/geoportal/Oeffentlich_zugaengliche_Strassenparkplaetze_OGD?service=WFS&version=1.1.0&request=GetFeature&outputFormat=GeoJSON&typename=view_pp_ogd'
-
-with urlopen(geo_url) as response:
-    geo_data = json.load(response)
-
-to_trans = {'Blaue Zone': 'Blue Zone',
-            'Weiss markiert': 'White Zone',
-            'Nur mit Geh-Behindertenausweis': 'Disabled',
-            'Nur für Taxi': 'Only Taxi',
-            'Für Reisecars': 'Only Coaches',
-            'Für Elektrofahrzeuge': 'Only Electric vehicles',
-            'Zeitweise Taxi, zeitweise Güterumschlag': 'Temporary'}
-
-df_park = pd.json_normalize(geo_data['features'])
-
-rename_dict = { 'properties.id1' : 'property_id', 
-                'properties.parkdauer' : 'parking_duration', 
-                'properties.art' : 'parking_kind',
-                'properties.gebuehrenpflichtig': 'payed', 
-                'properties.objectid' : 'object_id',
-                'geometry.coordinates': 'coord'}
-
-df_park = df_park.rename(columns=rename_dict)
-
-df_park[['lon', 'lat']] = pd.DataFrame(df_park.coord.to_list())
-df_park = df_park.drop(['type', 'geometry.type', 'coord', 'id', 'object_id'], axis=1)
-df_park.loc[df_park['payed'] == 'nicht gebührenpflichtig', 'payed'] = 0
-df_park.loc[df_park['payed'] == 'gebührenpflichtig', 'payed'] = 1
-for key in to_trans:
-    df_park.loc[df_park['parking_kind'] == key, 'parking_kind'] = to_trans[key]
+#geo_url = 'https://www.ogd.stadt-zuerich.ch/wfs/geoportal/Oeffentlich_zugaengliche_Strassenparkplaetze_OGD?service=WFS&version=1.1.0&request=GetFeature&outputFormat=GeoJSON&typename=view_pp_ogd'
 
 ############################## SCORING: Tim traffic score ############################
 
@@ -121,18 +75,26 @@ df_park.loc[df_park['payed'] == 'gebührenpflichtig', 'payed'] = 1
 for key in to_trans:
     df_park.loc[df_park['parking_kind'] == key, 'parking_kind'] = to_trans[key]
 
+############################## NEW  ############################
+# ############################## Filter parking spots inside Radius ############################
+############################## Filter parking spots inside Radius ############################
+# ############################## Filter parking spots inside Radius ############################
+# ############################## Filter parking spots inside Radius ############################
 
-# df_park # display the table of on-street parking data
+lat_dis_zh=77.8 #one degree of lat is about 78 km at Zurich
+lon_dis_zh=39.305 
+def cal_d(row):
+    return (np.sqrt(((row['lat']-user_input_lat)*lat_dis_zh)**2+((row['lon']-user_input_lon)*lon_dis_zh)**2))*1000
 
-# map_fig = px.scatter_mapbox(df_park, lat='lat', lon='lon', color='parking_kind')
-# map_fig.update_layout(
-#     mapbox_style="open-street-map",
-#     mapbox_zoom=13, 
-#     mapbox_center = {"lat": 47.373878, "lon": 8.545094},
-#     height=1000,
-#     width=1000)
+df_park['dis_to_des']=df_park.apply(cal_d,axis=1)
 
-# st.plotly_chart(map_fig)
+def label_in_radius(row):
+    if row['dis_to_des']<radius:
+        return 1
+    else:
+        return 0
+
+df_park['in_radius']=df_park.apply(label_in_radius,axis=1)
 
 #############################################obtain geo of parking houses - Timothycode##############################################################
 geo_url2 = "https://www.ogd.stadt-zuerich.ch/wfs/geoportal/Oeffentlich_zugaengliche_Parkhaeuser?service=WFS&version=1.1.0&request=GetFeature&outputFormat=GeoJSON&typename=poi_parkhaus_view"
@@ -166,8 +128,19 @@ data = pd.DataFrame({
                          'Montag - Samstag, 9:00 - 20:00 Uhr']
 })
 
-################################################## Plotting ##########################################################################
-####################################plot base map with choropleth############################################################
+####################################### display data of parking spots in radius ####################################################################################
+if st.checkbox('Show the list of nearby parking spots'):
+    st.dataframe(df_park[df_park['in_radius']==1])
+    
+
+#########################################section 3: Plotting ################################################################
+#########################################section 3: Plotting ################################################################
+##########################################section 3: Plotting ################################################################
+
+st.header("")
+st.header("Display parking choices nearby")
+
+# trace 1: plot base map with choropleth#
 tarifzones = px.choropleth_mapbox(
     data,
     geojson=tarif,  # GeoJSON with region boundaries and properties
@@ -177,7 +150,7 @@ tarifzones = px.choropleth_mapbox(
     color_continuous_scale="turbo",  # Choose a color scale
     mapbox_style="open-street-map",
     center={"lat": user_input_lat, "lon": user_input_lon},
-    zoom=18,
+    zoom=14,
     height=1000,
     width=1000,
     opacity=0.4,
@@ -185,14 +158,7 @@ tarifzones = px.choropleth_mapbox(
 )
 tarifzones.update_coloraxes(showscale=False)
 
-####################################plot added trace of on-street parking and parking houses ############################################################
-#add radio to select show parking_kind in same marker but diff color,  or same color but different marker.
-
-# show_plot = st.radio(
-#     label='Choose display option of a parking spot ', options=['color', 'marker'])
-
-# if show_plot == 'color':
-# parking_colors= df_park['parking_kind'].unique()
+#  trace 2: plot added trace of on-street parking#
 parking_colors={
     "Blue Zone": "blue",
     "White Zone": "white",
@@ -204,43 +170,32 @@ parking_colors={
 
 parking_markers=[parking_colors[i] for i in df_park["parking_kind"]]
 
+# map_fig_onstreet = go.Scattermapbox(   
+#     lat=df_park['lat'], 
+#     lon=df_park['lon'], 
+#     text=df_park.apply(lambda row: f"{row['parking_kind']} - {row['parking_duration']} minutes allowed", axis=1),
+#     mode='markers',
+#     name="On-street parking",
+#     marker=dict(
+#         size=10,
+#         #symbol='square',-> this just does not work.
+#         color=parking_markers))
 
+#TRY: ONLY DISPLAY THE SPOTS IN SIDE THE RADIUS
 map_fig_onstreet = go.Scattermapbox(   
-    lat=df_park['lat'], 
-    lon=df_park['lon'], 
+    lat=df_park[df_park['in_radius']==1]['lat'], 
+    lon=df_park[df_park['in_radius']==1]['lon'], 
     text=df_park.apply(lambda row: f"{row['parking_kind']} - {row['parking_duration']} minutes allowed", axis=1),
     mode='markers',
     name="On-street parking",
     marker=dict(
         size=10,
         #symbol='square',-> this just does not work.
-        color=parking_markers)
-)
+        color=parking_markers))
 
 tarifzones.add_trace(map_fig_onstreet)
 
-
-
-
-# map_fig_onstreet.update_layout(
-#     mapbox_style="open-street-map",
-#     mapbox_center={"lat": user_input_lat, "lon": user_input_lon},
-#     mapbox_zoom=18,
-# )
-
-
-
-# else:#this part does not yet work.
-#     for pk in df_park['parking_kind'].unique():
-#         map_fig_onstreet = go.Scattermapbox(   
-#             lat=df_park[df_park['parking_kind']==pk]['lat'], 
-#             lon=df_park[df_park['parking_kind']==pk]['lon'], 
-#             mode='markers',
-#             marker=dict(size=10,symbol=pk),
-#             name=pk,
-#             )
-#         tarifzones.add_trace(map_fig_onstreet)
-
+# trace 3: added trace of destination on the map#
 destination_trace = go.Scattermapbox(
     lat=[user_input_lat], 
     lon=[user_input_lon], 
@@ -251,25 +206,17 @@ destination_trace = go.Scattermapbox(
     )
 tarifzones.add_trace(destination_trace)
 
-
-
-
-
-
-
-st.subheader("Display parking choices near to my destination")
-
-if st.checkbox('Show parking houses in map'):
+# trace 4: added trace parking houses #
+if st.checkbox('Include parking houses'):
     tarifzones.add_trace(parkinghouse_trace)
 
+# display the graph with all traces#
 st.plotly_chart(tarifzones)
 
-
-
-
-
-################################### display data #######################################################
-st.title("Data zone")
+################################### section 3: display data #######################################################
+################################### section 3: display data #######################################################
+################################### section 3: display data #######################################################
+st.header("Data zone")
 
 if st.checkbox('Show on-street parking data below'):
     sentence=f"On-street data sheet contains {df_park.shape[0]} rows and {df_park.shape[1]} columns data."
