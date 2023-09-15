@@ -54,36 +54,36 @@ def read_data(path):
     return pd.read_csv(path)
 
 
-file_path = "./data/processed/parking_spots_traffic_scores.csv"
+file_path = "./data/processed/full_final_df_norm.csv"
 
 df_park = read_data(file_path)
 
-to_trans = {
-    "Blaue Zone": "Blue Zone",
-    "Weiss markiert": "White Zone",
-    "Nur mit Geh-Behindertenausweis": "Disabled",
-    "Nur für Taxi": "Only Taxi",
-    "Für Reisecars": "Only Coaches",
-    "Für Elektrofahrzeuge": "Only Electric vehicles",
-    "Zeitweise Taxi, zeitweise Güterumschlag": "Temporary",
-}
+# to_trans = {
+#     "Blaue Zone": "Blue Zone",
+#     "Weiss markiert": "White Zone",
+#     "Nur mit Geh-Behindertenausweis": "Disabled",
+#     "Nur für Taxi": "Only Taxi",
+#     "Für Reisecars": "Only Coaches",
+#     "Für Elektrofahrzeuge": "Only Electric vehicles",
+#     "Zeitweise Taxi, zeitweise Güterumschlag": "Temporary",
+# }
 
-rename_dict = {
-    "properties.id1": "property_id",
-    "properties.parkdauer": "parking_duration",
-    "properties.art": "parking_kind",
-    "properties.gebuehrenpflichtig": "payed",
-    "properties.objectid": "object_id",
-    "geometry.coordinates": "coord",
-}
+# rename_dict = {
+#     "properties.id1": "property_id",
+#     "properties.parkdauer": "parking_duration",
+#     "properties.art": "parking_kind",
+#     "properties.gebuehrenpflichtig": "payed",
+#     "properties.objectid": "object_id",
+#     "geometry.coordinates": "coord",
+# }
 
-df_park = df_park.rename(columns=rename_dict)
+# df_park = df_park.rename(columns=rename_dict)
 
-df_park = df_park.drop(["type", "geometry.type", "coord", "id", "object_id"], axis=1)
-df_park.loc[df_park["payed"] == "nicht gebührenpflichtig", "payed"] = 0
-df_park.loc[df_park["payed"] == "gebührenpflichtig", "payed"] = 1
-for key in to_trans:
-    df_park.loc[df_park["parking_kind"] == key, "parking_kind"] = to_trans[key]
+# df_park = df_park.drop(["type", "geometry.type", "coord", "id", "object_id"], axis=1)
+# df_park.loc[df_park["payed"] == "nicht gebührenpflichtig", "payed"] = 0
+# df_park.loc[df_park["payed"] == "gebührenpflichtig", "payed"] = 1
+# for key in to_trans:
+#     df_park.loc[df_park["parking_kind"] == key, "parking_kind"] = to_trans[key]
 
 ############################## NEW  ############################
 # ############################## Filter parking spots inside Radius ############################
@@ -228,7 +228,9 @@ def produe_marker_colors(values, color_scale=100):
 
 # df_park["score"] = df_park["anzfahrzeuge"] / df_park["anzfahrzeuge"].sum()
 
-parking_markers, cmap = produe_marker_colors(df_park["anzfahrzeuge"])
+parking_markers, cmap = produe_marker_colors(
+    df_park["anzfahrzeuge"]
+)  # replace 'anzfahrzeuge' with 'score'
 
 map_fig_onstreet = go.Scattermapbox(
     lat=df_park["lat"],
