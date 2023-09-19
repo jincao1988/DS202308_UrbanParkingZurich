@@ -47,8 +47,8 @@ df_park = df_park.rename(columns=rename_dict)
 
 df_park[['lon', 'lat']] = pd.DataFrame(df_park.coord.to_list())
 df_park = df_park.drop(['type', 'geometry.type', 'coord', 'id', 'object_id'], axis=1)
-df_park.loc[df_park['payed'] == 'nicht gebührenpflichtig', 'payed'] = 0
-df_park.loc[df_park['payed'] == 'gebührenpflichtig', 'payed'] = 1
+df_park.loc[df_park['needtopay'] == 'nicht gebührenpflichtig', 'payed'] = 0
+df_park.loc[df_park['needtopay'] == 'gebührenpflichtig', 'payed'] = 1
 for key in to_trans:
     df_park.loc[df_park['parking_kind'] == key, 'parking_kind'] = to_trans[key]
 
