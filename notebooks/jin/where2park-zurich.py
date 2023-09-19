@@ -248,10 +248,10 @@ with streamlit_analytics.track():
             st.write(sentence)
             data
 
-        from streamlit_discourse import st_discourse # https://discuss.streamlit.io/t/discourse-component/8061
-        discourse_url = "discuss.streamlit.io"
-        topic_id = 8061
-        st_discourse(discourse_url, topic_id)
+        # from streamlit_discourse import st_discourse # https://where2park-zurich.streamlit.app/
+        # discourse_url = "discuss.streamlit.io"
+        # topic_id = 8061
+        # st_discourse(discourse_url, topic_id)
 
 
         # ################################### add destination circle############################################
