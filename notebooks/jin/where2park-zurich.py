@@ -58,7 +58,7 @@ radius = st.number_input("How far are you willing to park (in meters)?",value=30
 
 
 with streamlit_analytics.track():
-    if st.button("CLICK ME to update input !!!!!!"):
+    if st.button("CLICK ME to update input !!!!!!",key=1):
         coordinates = get_geocode_from_address(new_address)
 
 # get coordinates from the given address ## 
